@@ -1,0 +1,112 @@
+============================ Data Structures ===============================
+* struct addrinfo
+* struct sockaddr
+* struct sockaddr_in
+* struct in_addr
+============================================================================
+
+struct addrinfo {
+	int		ai_flags;
+	int		ai_family;
+	int		ai_socktype;
+	int		ai_protocol;
+	size_t		ai_addrlen;
+	struct sockaddr *ai_addr;
+	char		*ai_canonname;
+
+	struct addrinfo *ai_next;
+};
+
+struct is used to prep the socket address structures for subsequent use.
+
+Load this struct and call getaddrinf() it will return pointer to a new
+linked list of these structures filled out.
+
+ai_addr field is a pointer to struct sockaddr.
+
+struct sockaddr {
+	unsigned short	sa_family;
+	char		sa_data[14];
+};
+
+struct holds socket address information for many types of socket.
+
+to deal with it struct sockaddr_in (Internet) was created.
+
+struct sockaddr_in {
+	short int		sin_family;
+	unsigned short int	sin_port;
+	struct in_addr		sin_addr;
+	unsigned char		sin_zero[8];
+};
+
+struct make it easy to reference elements of the socket address.
+
+struct in_addr {
+	uint32_t s_addr;
+}
+
+============================ System Calls ==================================
+* getaddrinfo()
+* socket()
+* bind()
+* connect()
+* listen()
+* accept()
+* send()
+* recv()
+* close()
+* shutdown()
+============================================================================
+
+int getaddrinfo(const char *node,
+		const char *service,
+		const struct addrinfo *hints,
+		struct addrinfo **res);
+
+getaddrinfo() system call helps to set up the structs.
+
+three input parameters gives you a pointer to res (results)
+
+-- node:	HOSTNAME or IP
+-- service:	HTTP, PORT, etc.
+-- hints:	pointer to struct addrinfo
+
+** int socket(int domain, int type, int protocol);
+
+fill values from results of getaddrinfo() call
+socket() returns socket descriptor for later use.
+
+** int bind(int sockfd, struct sockaddr *my_addr, int addrlen);
+
+bind() associates socket with a port on a local machine.
+
+** int connect(int sockfd, struct sickaddr *serv_addr, int adrlen);
+
+connect() connects to a remote host.
+
+** int listen(int sockdf, int backlog);
+
+listen() listens on port and waits for incoming connections.
+
+backlog is a max connections allowed, incoming connections are going to
+wait in queue until accept() them - this is the limit on how many can queue
+
+** int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
+
+addr will be a pointer to struct sockaddr_storage (info about incoming
+connection)
+
+after accept new socket will be used for communication (send() and recv())
+if you are getting only one connection you can close() the listennig sockdf
+in order to prevent more incoming connections.	
+
+** int send(int sockfd, const void *msg, int len, int falgs);
+** int recv(int sockfd, void *buf, int len, int flags);
+
+functions for communicating over stream sockets
+
+send() returns the number of bytes actually sent out
+recv() returns the number of bytes actually read into buffer
+
+if recv() returns 0 => the remote side has closed the connection.
