@@ -64,6 +64,15 @@ void init(void) {
 	}
 }
 
+void fanOutMsg(int ex, char *buf, size_t len) {
+	for (int i = 0; i <= tinyChat->maxclient; ++i) {
+		if (tinyChat->clients[i] == NULL ||
+		    tinyChat->clients[i]->fd == ex) continue;
+		
+		write(i, buf, len);
+	}
+}
+
 /* ====================== main() chat logic = =============================
  * accept new clients,
  * check if any client sent new msg,
@@ -111,13 +120,21 @@ int main(void) {
 		for (int i = 0; i <= tinyChat->maxclient; ++i) {
 			if (tinyChat->clients[i] == NULL) continue;
 			if (FD_ISSET(i, &readfds)) {
+				/* read until EOF */
 				int nread = read(i, readbuf, sizeof(readbuf)-1);
 				if (nread <= 0) {
 				     	printf("Disconnected client: %s, fd=%d\n", 
 						tinyChat->clients[i]->nick, i);
 					tinyChat->clients[i] = NULL;
 				} else {
-					puts("user wants to send a msg");
+					readbuf[nread] = '\0';
+					char msg[256];
+					int len = snprintf(msg, sizeof(msg), 
+						"%s: %s", 
+						tinyChat->clients[i]->nick, readbuf);
+					/* send well formated msg to all users
+					except sender */
+					fanOutMsg(i, msg, len);
 				}
 			}
 		}
